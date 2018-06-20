@@ -30,13 +30,23 @@ class MyModel(nn.Module):
         self.pool = nn.MaxPool2d((config['max_len'],1))
         self.relu = nn.ReLU()
 
-    def forward(self, agg_input, event_0, event_1, event_2, hour, type, len):
+    def forward(self, agg_input, event_0, event_1, event_2, hour, type, len ):
 
         batch_size = agg_input.size(0)
         agg_input = agg_input.float()
         agg_hidden = self.agg_to_hidden(agg_input)
         log_embedding = self.log_repr( event_0, event_1, event_2, hour, type)
+        mask = torch.zeros((batch_size, self.config['max_len'], self.log_embedding_dim))
+
+        if self.config['use_CUDA']:
+            mask = mask.cuda()
+        for i,one_len in enumerate(len):
+            for j in range(one_len):
+                mask[i][j] = 1
+
+        log_embedding = log_embedding * mask
         hidden = self.init_hidden(batch_size, self.config['num_layers'], self.config['hidden_dim'])
+
         log_rnn_outputs, _ = self.log_lstm(log_embedding, hidden)
 
         log_rnn_outputs = log_rnn_outputs.contiguous()

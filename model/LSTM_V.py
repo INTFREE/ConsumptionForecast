@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
-
+from torch.autograd import Variable
 class LSTM_V(object):
     def __init__(self, input_size, hidden_size, num_layers=1, bias=True, batch_first=True, dropout=0,
                  bidirectional=False, only_use_last_hidden_state=False):
@@ -42,6 +42,7 @@ class LSTM_V(object):
         :param x_len: numpy list
         :return:
         """
+        batch_size = x.size(0)
         """sort"""
         x_sort_idx = np.argsort(-x_len)
         x_unsort_idx = torch.LongTensor(np.argsort(x_sort_idx))
@@ -50,7 +51,9 @@ class LSTM_V(object):
         """pack"""
         x_emb_p = torch.nn.utils.rnn.pack_padded_sequence(x, x_len, batch_first=self.batch_first)
         """process using RNN"""
-        out_pack, (ht, ct) = self.LSTM(x_emb_p, None)
+        hidden = self.init_hidden(batch_size, self.num_layers, self.hidden_size)
+        
+        out_pack, (ht, ct) = self.LSTM(x_emb_p, hidden)
         """unsort: h"""
         ht = torch.transpose(ht, 0, 1)[
             x_unsort_idx]  # (num_layers * num_directions, batch, hidden_size) -> (batch, ...)
@@ -69,3 +72,10 @@ class LSTM_V(object):
             ct = torch.transpose(ct, 0, 1)
 
             return out, (ht, ct)
+
+
+    def init_hidden(self, batch_size, num_layers, hidden_size):
+        weight = next(self.LSTM.parameters()).data
+
+        return (Variable(weight.new(num_layers*2, batch_size, hidden_size).zero_()),
+                Variable(weight.new(num_layers*2, batch_size, hidden_size).zero_()))

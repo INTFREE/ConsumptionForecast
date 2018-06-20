@@ -1,7 +1,7 @@
 import numpy as np
 from collections import defaultdict
-from matplotlib import pyplot as plt
 train_dir = './data/train/'
+test_dir = './data/test/'
 time = ['00', '04', '08', '12', '16', '20', '24']
 def deal_log_data(file):
     res = defaultdict(list)
@@ -72,7 +72,9 @@ def read_flg_data(file):
             user_id = line[0]
             flag = line[1]
             res[user_id] = int(flag)
-            count += 1
+            if flag == '1':
+                count += 1
+    print(count)
     return res
 
 def build_log_vocab(logs):
@@ -104,13 +106,14 @@ if __name__ == '__main__':
     #             temp_re.append(float(para))
     #         user_profile.append(temp_re)
     #         break
-    log_res = deal_log_data(train_dir + 'train_log.csv')
-    print(log_res['10002'])
+    #log_res = deal_log_data(train_dir + 'train_log.csv')
+    #print(log_res['10002'])
     # lens = []
     # for item in log_res.values():
     #     lens.append(len(item))
     # plt.hist(lens)
     # plt.show()
-    agg_res = read_agg_data(train_dir + 'train_agg.csv')
+    agg_res = read_agg_data(test_dir + 'test_agg.csv')
+    print(agg_res.keys())
     flg_res = read_flg_data(train_dir + 'train_flg.csv')
 

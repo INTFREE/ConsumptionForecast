@@ -6,13 +6,15 @@ from config import rnn_config
 class MyDataSet(Dataset):
     def __init__(self, agg, log, event_vocab, flg = None):
 
-        self.user_ids = log.keys()
+        self.user_ids = agg.keys()
         self.agg = []
         self.log = []
         self.len = []
         if flg:
             self.flg = []
             self.is_test = False
+        else:
+            self.is_test = True
         for user_id in self.user_ids:
             self.agg.append(np.array(agg[user_id],dtype=float))
             self.len.append(1)
