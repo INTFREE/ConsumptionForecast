@@ -1,8 +1,12 @@
 import numpy as np
 from collections import defaultdict
+from sklearn import preprocessing
+
 train_dir = './data/train/'
 test_dir = './data/test/'
 time = ['00', '04', '08', '12', '16', '20', '24']
+
+
 def deal_log_data(file):
     res = defaultdict(list)
     count = 0
@@ -47,8 +51,11 @@ def deal_log_data(file):
                         temp_feature[3] = i
         return res
 
+
 def read_agg_data(file):
     res = defaultdict(list)
+    temp_res = []
+    temp_ids = []
     count = 0
     with open(file, 'r') as f:
         title = f.readline()
@@ -56,11 +63,17 @@ def read_agg_data(file):
             line = line.strip().split('\t')
             user_id = line[-1]
             data = line[:-1]
-            for i,item in enumerate(data):
+            for i, item in enumerate(data):
                 data[i] = float(item)
-            res[user_id] = data
-            count +=1
+            temp_ids.append(user_id)
+            temp_res.append(data)
+            count += 1
+    res_normal = preprocessing.normalize(temp_res)
+    for i in range(0, len(temp_ids)):
+        res[temp_ids[i]] = res_normal[i]
+    print(res)
     return res
+
 
 def read_flg_data(file):
     res = defaultdict(int)
@@ -77,6 +90,7 @@ def read_flg_data(file):
     print(count)
     return res
 
+
 def build_log_vocab(logs):
     event_count = defaultdict(int)
     for user in logs:
@@ -92,6 +106,7 @@ def build_log_vocab(logs):
             count+=1
 
     return event_vocab
+
 
 if __name__ == '__main__':
     train_dir = './data/train/'
@@ -114,6 +129,6 @@ if __name__ == '__main__':
     # plt.hist(lens)
     # plt.show()
     agg_res = read_agg_data(test_dir + 'test_agg.csv')
-    print(agg_res.keys())
-    flg_res = read_flg_data(train_dir + 'train_flg.csv')
+    # print(agg_res.keys())
+    # flg_res = read_flg_data(train_dir + 'train_flg.csv')
 
