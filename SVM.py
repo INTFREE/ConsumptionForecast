@@ -61,7 +61,6 @@ if __name__ == '__main__':
     train_data = read_agg_data()
     test_data = read_test_data()
     print('read finish, train start')
-    classifier = svm.SVC(kernel='rbf',class_weight={0:1, 1:20})
     train_X = []
     train_Y = []
     test_X = []
@@ -72,11 +71,15 @@ if __name__ == '__main__':
         train_Y.append(data[-1])
     for key in test_data.keys():
         test_X.append(test_data[key])
+
+    classifier = svm.SVC(kernel='rbf', class_weight={0: 1, 1: 24}, probability=True)
     classifier.fit(train_X, train_Y)
-    result = classifier.predict(test_X)
+    result = classifier.score(test_X)
     print('train finish')
+
     ids = list(test_data.keys())
-    with open('test_result_rbf_svm.csv', 'w') as f:
+    with open('test_result.csv', 'w') as f:
         f.write('USERID' + '\t' + 'RST' + '\n')
         for i in range(0, len(ids)):
             f.write(str(ids[i]) + '\t' + str(result[i]) + '\n')
+    print(np.sum(train_Y))
