@@ -2,6 +2,7 @@ from sklearn import svm
 from sklearn import preprocessing
 from collections import defaultdict
 import numpy as np
+from xgboost import XGBClassifier
 
 
 def read_test_data():
@@ -57,6 +58,7 @@ def read_agg_data():
             train_res[user_id].append(flag)
     return train_res
 
+
 if __name__ == '__main__':
     train_data = read_agg_data()
     test_data = read_test_data()
@@ -71,15 +73,31 @@ if __name__ == '__main__':
         train_Y.append(data[-1])
     for key in test_data.keys():
         test_X.append(test_data[key])
-
-    classifier = svm.SVC(kernel='rbf', class_weight={0: 1, 1: 24}, probability=True)
+    train_X = np.array(train_X)
+    train_Y = np.array(train_Y)
+    test_X = np.array(test_X)
+    classifier = XGBClassifier(learning_rate=0.1,
+         n_estimators=1000,
+         max_depth=5,
+         min_child_weight=1,
+         gamma=0,
+         subsample=0.8,
+         colsample_bytree=0.8,
+         objective= 'binary:logistic',
+         nthread=4,
+         scale_pos_weight=1,
+         seed=27)
     classifier.fit(train_X, train_Y)
-    result = classifier.score(test_X)
-    print('train finish')
+    result = classifier.predict_proba(test_X)
 
+    # classifier = svm.SVC(kernel='rbf', class_weight={0: 1, 1: 24}, probability=True)
+    # classifier.fit(train_X, train_Y)
+    # result = classifier.score(test_X)
+    print('train finish')
+    print(result[0])
     ids = list(test_data.keys())
     with open('test_result.csv', 'w') as f:
         f.write('USERID' + '\t' + 'RST' + '\n')
         for i in range(0, len(ids)):
-            f.write(str(ids[i]) + '\t' + str(result[i]) + '\n')
+            f.write(str(ids[i]) + '\t' + str(result[i][1]).strip() + '\n')
     print(np.sum(train_Y))
