@@ -52,10 +52,11 @@ def deal_log_data(file):
         return res
 
 
-def read_agg_data(file):
+def read_agg_data(file, log_file = None):
     res = defaultdict(list)
     temp_res = []
     temp_ids = []
+    id_index = {}
     count = 0
     with open(file, 'r') as f:
         title = f.readline()
@@ -63,15 +64,28 @@ def read_agg_data(file):
             line = line.strip().split('\t')
             user_id = line[-1]
             data = line[:-1]
+            if log_file:
+                data.append(0)
             for i, item in enumerate(data):
                 data[i] = float(item)
             temp_ids.append(user_id)
             temp_res.append(data)
+            id_index[user_id] = count
             count += 1
+
+    if log_file:
+        with open(log_file,'r') as f:
+            title = f.readline()
+            for line in f.readlines():
+                paras = line.strip().split('\t')
+                user_id = paras[0]
+                index = id_index[user_id]
+                temp_res[index][-1]+=1
+
     res_normal = preprocessing.normalize(temp_res)
     for i in range(0, len(temp_ids)):
         res[temp_ids[i]] = res_normal[i]
-    print(res)
+
     return res
 
 
