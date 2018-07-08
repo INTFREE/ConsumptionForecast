@@ -24,33 +24,32 @@ def split_data(user_ids, data):
 
 if __name__ == '__main__':
 
-    train_agg = read_agg_data(
-        train_dir + 'train_agg.csv',
-        train_dir + 'train_log.csv'
-    )
+    train_agg = read_agg_data(train_dir + 'train_agg.csv')
     train_flg = read_flg_data(train_dir + 'train_flg.csv')
-    test_agg = read_agg_data(
-        test_dir + 'test_agg.csv',
-        test_dir + 'test_log.csv'
-    )
+    train_log = read_log_data(train_dir + 'train_log.csv')
+    train_data = merge_features(agg_feature=train_agg, other_features=train_log)
+    test_agg = read_agg_data(test_dir + 'test_agg.csv')
+    test_log = read_log_data(test_dir + 'test_log.csv')
+    test_data = merge_features(agg_feature=test_agg, other_features=test_log)
     print('load data end')
-    user_ids = list(train_agg.keys())
-    test_user_ids = list(test_agg.keys())
+    user_ids = list(train_data.keys())
+    test_user_ids = list(test_data.keys())
 
 
 
     #    train_agg, valid_agg = split_data(user_ids, agg_res)
     #    train_flg, valid_flg = split_data(user_ids, flg_res)
 
-    train_X = np.array([train_agg[key] for key in train_agg])
+    train_X = np.array([train_data[key] for key in train_data])
+    print(train_X.shape)
     train_Y = np.array([train_flg[key] for key in train_agg])
 
-    test_X = np.array([test_agg[key] for key in test_agg])
-
+    test_X = np.array([test_data[key] for key in test_data])
+    print(test_X.shape)
     print('train start')
-    cv_params = {'n_estimators': [100, 200, 300, 400, 500, 600, 700, 800]}
-    other_params = {'learning_rate': 0.1, 'max_depth': 5, 'min_child_weight': 1, 'seed': 0,
-                    'subsample': 0.8, 'colsample_bytree': 0.8, 'gamma': 0, 'reg_alpha': 0, 'reg_lambda': 1}
+    cv_params = {}
+    other_params = {'learning_rate': 0.07, 'max_depth': 5, 'min_child_weight': 6, 'seed': 0, 'n_estimators': 100,
+                    'subsample': 0.9, 'colsample_bytree': 0.9, 'gamma': 0.6, 'reg_alpha': 0, 'reg_lambda': 1}
 
     classifier = XGBClassifier(**other_params)
 
@@ -68,9 +67,9 @@ if __name__ == '__main__':
 
     print('Train auc %f' % (train_auc))
 
-    #xgboost.plot_tree(classifier, num_trees=0)
-    #test_prob = clf.predict_proba(test_X)[:, 1]
-    #with open('xgboost_result.txt', 'w') as output:
-    #    for i, key in enumerate(test_agg):
-    #        output.write(str(key) + '\t' + str(test_prob[i]) + '\n')
-    #plt.savefig('800.png', dpi=800)
+    # xgboost.plot_tree(classifier, num_trees=0)
+    test_prob = clf.predict_proba(test_X)[:, 1]
+    with open('xgboost_result.txt', 'w') as output:
+       for i, key in enumerate(test_data):
+           output.write(str(key) + '\t' + str(test_prob[i]) + '\n')
+    # plt.savefig('800.png', dpi=800)

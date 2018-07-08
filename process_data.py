@@ -7,6 +7,22 @@ test_dir = './data/test/'
 time = ['00', '04', '08', '12', '16', '20', '24']
 
 
+def merge_features(agg_feature, other_features):
+    other_feature_keys = other_features.keys()
+    temp_feature_key = list(other_feature_keys)[0]
+    temp_value = other_features[temp_feature_key]
+    dimension = len(temp_value)
+    initial_value = [0 for i in range(dimension)]
+    for key in agg_feature.keys():
+        value = agg_feature[key]
+        if key in other_feature_keys:
+            value = np.append(value, other_features[key])
+        else:
+            value = np.append(value, initial_value)
+        agg_feature[key] = value
+    return agg_feature
+
+
 def deal_log_data(file):
     res = defaultdict(list)
     count = 0
@@ -49,10 +65,13 @@ def deal_log_data(file):
                 for i in range(0, len(time) - 1):
                     if hour >= time[i] and hour < time[i + 1]:
                         temp_feature[3] = i
+        for key in res.keys():
+            print(key, res[key])
+            break
         return res
 
 
-def read_agg_data(file, log_file=None):
+def read_agg_data(file, log_file = None):
     res = defaultdict(list)
     temp_res = []
     temp_ids = []
@@ -75,13 +94,11 @@ def read_agg_data(file, log_file=None):
     res_normal = preprocessing.normalize(temp_res)
     for i in range(0, len(temp_ids)):
         res[temp_ids[i]] = res_normal[i]
-
     return res
 
 
 def read_log_data(file):
     res = defaultdict(list)
-
     user_logs = {}
     feature_dict = {}
     vocab_size = 0
@@ -106,7 +123,6 @@ def read_log_data(file):
                 feature_index = feature_dict[feature]
                 res[user][feature_index] = user_logs[user][feature]
                 res[user][-1] += user_logs[user][feature]
-            res[user] = list(res[user])
     return res
 
 
@@ -181,5 +197,22 @@ if __name__ == '__main__':
     train_dir = './data/train/'
     test_dir = './data/test/'
     user_profile = []
-    new_log_res = read_log_data(train_dir + 'train_log.csv')
-    print(len(new_log_res))
+    # with open(train_dir + 'train_agg.csv', 'r') as f:
+    #     lines = f.readlines()
+    #     for line in lines[1:]:
+    #         paras = line.strip().split('\t')
+    #         temp_re = [int(paras[-1])]
+    #         for para in paras[:-1]:
+    #             temp_re.append(float(para))
+    #         user_profile.append(temp_re)
+    #         break
+    # log_res = deal_log_data(train_dir + 'train_log.csv')
+    # print(log_res['10002'])
+    # lens = []
+    # for item in log_res.values():
+    #     lens.append(len(item))
+    # plt.hist(lens)
+    # plt.show()
+    # agg_res = read_agg_data(test_dir + 'test_agg.csv')
+    # print(agg_res.keys())
+    # flg_res = read_flg_data(train_dir + 'train_flg.csv')
