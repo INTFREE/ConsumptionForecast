@@ -71,7 +71,7 @@ def deal_log_data(file):
         return res
 
 
-def read_agg_data(file, log_file = None):
+def read_agg_data(file, log_file=None):
     res = defaultdict(list)
     temp_res = []
     temp_ids = []
@@ -97,11 +97,10 @@ def read_agg_data(file, log_file = None):
     return res
 
 
-def read_log_data(file):
+def read_log_data(file,feature_vocab):
     res = defaultdict(list)
     user_logs = {}
-    feature_dict = {}
-    vocab_size = 0
+    vocab_size = len(feature_vocab)
     with open(file, 'r') as f:
         title = f.readline()
         for line in f.readlines():
@@ -112,16 +111,13 @@ def read_log_data(file):
             labels = paras[1].split('-')
             for label in labels:
                 user_logs[user_id][int(label)] += 1
-                if not int(label) in feature_dict:
-                    feature_dict[int(label)] = vocab_size
-                    vocab_size += 1
-        print(feature_dict,vocab_size)
+
         for user in user_logs:
             res[user] = np.zeros(vocab_size + 1)
             for feature in user_logs[user]:
-
-                feature_index = feature_dict[feature]
-                res[user][feature_index] = user_logs[user][feature]
+                if feature in feature_vocab:
+                    feature_index = feature_vocab[feature]
+                    res[user][feature_index] = user_logs[user][feature]
                 res[user][-1] += user_logs[user][feature]
     return res
 
@@ -158,6 +154,20 @@ def build_log_vocab(logs):
 
     return event_vocab
 
+def build_log_vocab_from_file(file):
+    event_vocab = defaultdict(int)
+    count = 0
+    with open(file, 'r') as f:
+        title = f.readline()
+        for line in f.readlines():
+            paras = line.strip().split('\t')
+            labels = paras[1].split('-')
+            for label in labels:
+                label = int(label)
+                if not label in event_vocab:
+                    event_vocab[label] = count
+                    count += 1
+    return event_vocab
 
 def extract_features(agg_file, log_file):
     res = defaultdict(dict)
@@ -197,6 +207,8 @@ if __name__ == '__main__':
     train_dir = './data/train/'
     test_dir = './data/test/'
     user_profile = []
+    vocab = build_log_vocab_from_file(train_dir+'train_log.csv')
+    print(vocab)
     # with open(train_dir + 'train_agg.csv', 'r') as f:
     #     lines = f.readlines()
     #     for line in lines[1:]:

@@ -3,7 +3,6 @@ from sklearn import metrics
 from xgboost import XGBClassifier
 from sklearn.grid_search import GridSearchCV
 
-
 folds = 1
 
 
@@ -23,19 +22,17 @@ def split_data(user_ids, data):
 
 
 if __name__ == '__main__':
-
+    log_vocab = build_log_vocab_from_file(train_dir + 'train_log.csv')
     train_agg = read_agg_data(train_dir + 'train_agg.csv')
     train_flg = read_flg_data(train_dir + 'train_flg.csv')
-    train_log = read_log_data(train_dir + 'train_log.csv')
+    train_log = read_log_data(train_dir + 'train_log.csv', log_vocab)
     train_data = merge_features(agg_feature=train_agg, other_features=train_log)
     test_agg = read_agg_data(test_dir + 'test_agg.csv')
-    test_log = read_log_data(test_dir + 'test_log.csv')
+    test_log = read_log_data(test_dir + 'test_log.csv', log_vocab)
     test_data = merge_features(agg_feature=test_agg, other_features=test_log)
     print('load data end')
     user_ids = list(train_data.keys())
     test_user_ids = list(test_data.keys())
-
-
 
     #    train_agg, valid_agg = split_data(user_ids, agg_res)
     #    train_flg, valid_flg = split_data(user_ids, flg_res)
@@ -59,7 +56,7 @@ if __name__ == '__main__':
     print('grid_scores:{0}'.format(clf.grid_scores_))
     print('best paras{0}'.format(clf.best_params_))
     print('best score:{0}'.format(clf.best_score_))
-    #classifier.fit(train_X, train_Y)
+    # classifier.fit(train_X, train_Y)
     print('train end')
 
     train_prob = clf.predict_proba(train_X)[:, 1]
@@ -70,6 +67,6 @@ if __name__ == '__main__':
     # xgboost.plot_tree(classifier, num_trees=0)
     test_prob = clf.predict_proba(test_X)[:, 1]
     with open('xgboost_result.txt', 'w') as output:
-       for i, key in enumerate(test_data):
-           output.write(str(key) + '\t' + str(test_prob[i]) + '\n')
-    # plt.savefig('800.png', dpi=800)
+        for i, key in enumerate(test_data):
+            output.write(str(key) + '\t' + str(test_prob[i]) + '\n')
+            # plt.savefig('800.png', dpi=800)
