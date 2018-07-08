@@ -42,7 +42,7 @@ def deal_log_data(file):
             res[pre_id] = features
         for key in res.keys():
             temp_res = np.array(res[key])
-            res[key] = temp_res[np.argsort(temp_res[:,3])]
+            res[key] = temp_res[np.argsort(temp_res[:, 3])]
             for temp_feature in res[key]:
                 temp_time = temp_feature[3]
                 hour = temp_time.split(' ')[1].split(':')[0]
@@ -52,7 +52,7 @@ def deal_log_data(file):
         return res
 
 
-def read_agg_data(file, log_file = None):
+def read_agg_data(file, log_file=None):
     res = defaultdict(list)
     temp_res = []
     temp_ids = []
@@ -72,20 +72,41 @@ def read_agg_data(file, log_file = None):
             temp_res.append(data)
             id_index[user_id] = count
             count += 1
-
-    if log_file:
-        with open(log_file,'r') as f:
-            title = f.readline()
-            for line in f.readlines():
-                paras = line.strip().split('\t')
-                user_id = paras[0]
-                index = id_index[user_id]
-                temp_res[index][-1]+=1
-
     res_normal = preprocessing.normalize(temp_res)
     for i in range(0, len(temp_ids)):
         res[temp_ids[i]] = res_normal[i]
 
+    return res
+
+
+def read_log_data(file):
+    res = defaultdict(list)
+
+    user_logs = {}
+    feature_dict = {}
+    vocab_size = 0
+    with open(file, 'r') as f:
+        title = f.readline()
+        for line in f.readlines():
+            paras = line.strip().split('\t')
+            user_id = paras[0]
+            if not user_id in user_logs:
+                user_logs[user_id] = defaultdict(int)
+            labels = paras[1].split('-')
+            for label in labels:
+                user_logs[user_id][int(label)] += 1
+                if not int(label) in feature_dict:
+                    feature_dict[int(label)] = vocab_size
+                    vocab_size += 1
+        print(feature_dict,vocab_size)
+        for user in user_logs:
+            res[user] = np.zeros(vocab_size + 1)
+            for feature in user_logs[user]:
+
+                feature_index = feature_dict[feature]
+                res[user][feature_index] = user_logs[user][feature]
+                res[user][-1] += user_logs[user][feature]
+            res[user] = list(res[user])
     return res
 
 
@@ -111,38 +132,54 @@ def build_log_vocab(logs):
         log = logs[user]
         for features in log:
             for feature in features[:3]:
-                event_count[feature]+=1
-    event_vocab = {'pad':0, 'unk':1}
+                event_count[feature] += 1
+    event_vocab = {'pad': 0, 'unk': 1}
     count = 2
     for event in event_count:
-        if event_count[event]>5:
+        if event_count[event] > 5:
             event_vocab[event] = count
-            count+=1
+            count += 1
 
     return event_vocab
+
+
+def extract_features(agg_file, log_file):
+    res = defaultdict(dict)
+    temp_res = []
+    temp_ids = []
+    id_index = {}
+    count = 0
+    with open(agg_file, 'r') as f:
+        title = f.readline()
+        for line in f.readlines():
+            line = line.strip().split('\t')
+            user_id = line[-1]
+            data = line[:-1]
+            if log_file:
+                data.append(0)
+            for i, item in enumerate(data):
+                data[i] = float(item)
+            temp_ids.append(user_id)
+            temp_res.append(data)
+            id_index[user_id] = count
+            count += 1
+
+    if log_file:
+        with open(log_file, 'r') as f:
+            title = f.readline()
+            for line in f.readlines():
+                paras = line.strip().split('\t')
+                user_id = paras[0]
+                index = id_index[user_id]
+                temp_res[index][-1] += 1
+    # res_normal = preprocessing.normalize(temp_res)
+    for i in range(0, len(temp_ids)):
+        res[temp_ids[i]] = res_normal[i]
 
 
 if __name__ == '__main__':
     train_dir = './data/train/'
     test_dir = './data/test/'
     user_profile = []
-    # with open(train_dir + 'train_agg.csv', 'r') as f:
-    #     lines = f.readlines()
-    #     for line in lines[1:]:
-    #         paras = line.strip().split('\t')
-    #         temp_re = [int(paras[-1])]
-    #         for para in paras[:-1]:
-    #             temp_re.append(float(para))
-    #         user_profile.append(temp_re)
-    #         break
-    #log_res = deal_log_data(train_dir + 'train_log.csv')
-    #print(log_res['10002'])
-    # lens = []
-    # for item in log_res.values():
-    #     lens.append(len(item))
-    # plt.hist(lens)
-    # plt.show()
-    agg_res = read_agg_data(test_dir + 'test_agg.csv')
-    # print(agg_res.keys())
-    # flg_res = read_flg_data(train_dir + 'train_flg.csv')
-
+    new_log_res = read_log_data(train_dir + 'train_log.csv')
+    print(len(new_log_res))
