@@ -7,19 +7,20 @@ test_dir = './data/test/'
 time = ['00', '04', '08', '12', '16', '20', '24']
 
 
-def merge_features(agg_feature, other_features):
-    other_feature_keys = other_features.keys()
-    temp_feature_key = list(other_feature_keys)[0]
-    temp_value = other_features[temp_feature_key]
-    dimension = len(temp_value)
-    initial_value = [0 for i in range(dimension)]
-    for key in agg_feature.keys():
-        value = agg_feature[key]
-        if key in other_feature_keys:
-            value = np.append(value, other_features[key])
-        else:
-            value = np.append(value, initial_value)
-        agg_feature[key] = value
+def merge_features(agg_feature, **other_features):
+    for other_feature in other_features.values():
+        other_feature_keys = other_feature.keys()
+        temp_feature_key = list(other_feature_keys)[0]
+        temp_value = other_feature[temp_feature_key]
+        dimension = len(temp_value)
+        initial_value = [0 for i in range(dimension)]
+        for key in agg_feature.keys():
+            value = agg_feature[key]
+            if key in other_feature_keys:
+                value = np.append(value, other_feature[key])
+            else:
+                value = np.append(value, initial_value)
+            agg_feature[key] = value
     return agg_feature
 
 
@@ -65,10 +66,20 @@ def deal_log_data(file):
                 for i in range(0, len(time) - 1):
                     if hour >= time[i] and hour < time[i + 1]:
                         temp_feature[3] = i
-        for key in res.keys():
-            print(key, res[key])
-            break
         return res
+
+
+def extract_time_interval_feature(file):
+    res = deal_log_data(file)
+    return_res = {}
+    for key in res.keys():
+        values = res[key]
+        initial = [0 for i in range(6)]
+        for value in values:
+            initial[int(value[3])] += 1
+        return_res[key] = initial
+    return return_res
+
 
 
 def read_agg_data(file, log_file=None):
@@ -154,6 +165,7 @@ def build_log_vocab(logs):
 
     return event_vocab
 
+
 def build_log_vocab_from_file(file):
     event_vocab = defaultdict(int)
     count = 0
@@ -168,6 +180,7 @@ def build_log_vocab_from_file(file):
                     event_vocab[label] = count
                     count += 1
     return event_vocab
+
 
 def extract_features(agg_file, log_file):
     res = defaultdict(dict)
@@ -207,8 +220,9 @@ if __name__ == '__main__':
     train_dir = './data/train/'
     test_dir = './data/test/'
     user_profile = []
-    vocab = build_log_vocab_from_file(train_dir+'train_log.csv')
-    print(vocab)
+    # vocab = build_log_vocab_from_file(train_dir+'train_log.csv')
+    # print(vocab)
+    extract_time_interval_feature('data/train/train_log.csv')
     # with open(train_dir + 'train_agg.csv', 'r') as f:
     #     lines = f.readlines()
     #     for line in lines[1:]:

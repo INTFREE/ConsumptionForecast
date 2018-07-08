@@ -26,10 +26,12 @@ if __name__ == '__main__':
     train_agg = read_agg_data(train_dir + 'train_agg.csv')
     train_flg = read_flg_data(train_dir + 'train_flg.csv')
     train_log = read_log_data(train_dir + 'train_log.csv', log_vocab)
-    train_data = merge_features(agg_feature=train_agg, other_features=train_log)
+    train_time_interval = extract_time_interval_feature(train_dir + 'train_log.csv')
+    train_data = merge_features(agg_feature=train_agg, log=train_log, time_interval=train_time_interval)
     test_agg = read_agg_data(test_dir + 'test_agg.csv')
     test_log = read_log_data(test_dir + 'test_log.csv', log_vocab)
-    test_data = merge_features(agg_feature=test_agg, other_features=test_log)
+    test_time_interval = extract_time_interval_feature(test_dir + 'test_log.csv')
+    test_data = merge_features(agg_feature=test_agg, log=test_log, time_interval=test_time_interval)
     print('load data end')
     user_ids = list(train_data.keys())
     test_user_ids = list(test_data.keys())
@@ -50,7 +52,7 @@ if __name__ == '__main__':
 
     classifier = XGBClassifier(**other_params)
 
-    clf = GridSearchCV(classifier, param_grid=cv_params, scoring='roc_auc', n_jobs=4, iid=False, cv=5)
+    clf = GridSearchCV(classifier, param_grid=cv_params, scoring='roc_auc', n_jobs=24, iid=False, cv=5)
     clf.fit(train_X, train_Y)
     print('best paras')
     print('grid_scores:{0}'.format(clf.grid_scores_))
