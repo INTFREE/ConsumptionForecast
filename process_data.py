@@ -49,38 +49,56 @@ def deal_log_data(file):
             labels = paras[1].split('-')
             for label in labels:
                 temp_feature.append(label)
-            temp_feature.append(paras[2])
+            temp_feature.append(paras[2].split()[0])
+            temp_feature.append(paras[2].split()[1])
             temp_feature.append(paras[3])
             features.append(temp_feature)
+
         if pre_id in res.keys():
             for feature in features:
                 res[pre_id].append(feature)
         else:
             res[pre_id] = features
+
         for key in res.keys():
             temp_res = np.array(res[key])
-            res[key] = temp_res[np.argsort(temp_res[:, 3])]
+            res[key] = temp_res[np.argsort(temp_res[:, 4])]
             for temp_feature in res[key]:
-                temp_time = temp_feature[3]
-                hour = temp_time.split(' ')[1].split(':')[0]
+                temp_time = temp_feature[4]
+                day = int(temp_feature[3].split('-')[2])
+                week_day = day%7
+                temp_feature[3] = week_day
+                hour = temp_time.split(':')[0]
                 for i in range(0, len(time) - 1):
                     if hour >= time[i] and hour < time[i + 1]:
-                        temp_feature[3] = i
+                        temp_feature[4] = i
+
         return res
 
 
 def extract_time_interval_feature(file):
     res = deal_log_data(file)
+
     return_res = {}
     for key in res.keys():
         values = res[key]
         initial = [0 for i in range(6)]
         for value in values:
-            initial[int(value[3])] += 1
+            initial[int(value[4])] += 1
         return_res[key] = initial
     return return_res
 
+def extract_day_interval_feature(file):
+    res = deal_log_data(file)
 
+    return_res = {}
+    for key in res.keys():
+        values = res[key]
+        initial = [0 for i in range(7)]
+        for value in values:
+            initial[int(value[3])] += 1
+        return_res[key] = initial
+    return return_res
 
 def read_agg_data(file, log_file=None):
     res = defaultdict(list)
